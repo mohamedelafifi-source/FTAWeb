@@ -1,0 +1,263 @@
+@page
+@model TreeViewModel
+@{
+    ViewData["Title"] = "Family Tree";
+}
+
+<div class="tree-container">
+    <div class="tree-header bg-light p-3 mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Family Tree: @Model.FileName</h3>
+        <a href="/" class="btn btn-secondary">Select Another File</a>
+    </div>
+    <div class="tree-content-wrapper" id="treeContentWrapper">
+        <div class="tree-content" id="treeContent">
+            <!-- Tree will be rendered here by JavaScript -->
+        </div>
+        <svg id="spouseConnections" class="spouse-connections"></svg>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const treeData = @Html.Raw(Model.JsonContent);
+        
+        // Level color mapping
+        const levelColors = {
+            0: '#FFE5E5', // Light red
+            1: '#E5F3FF', // Light blue
+            2: '#E5FFE5', // Light green
+            3: '#FFF5E5', // Light orange
+            4: '#F0E5FF', // Light purple
+            5: '#FFE5F0', // Light pink
+            6: '#E5FFFF', // Light cyan
+            7: '#FFFFE5'  // Light yellow
+        };
+
+        function getLevelColor(level) {
+            return levelColors[level] || '#F5F5F5'; // Default gray
+        }
+
+        // Create a map for quick person lookup
+        const personMap = new Map();
+        treeData.forEach(person => {
+            personMap.set(person.name, person);
+        });
+
+        // Group people by level
+        const peopleByLevel = {};
+        treeData.forEach(person => {
+            if (!peopleByLevel[person.level]) {
+                peopleByLevel[person.level] = [];
+            }
+            peopleByLevel[person.level].push(person);
+        });
+
+        // Get all levels sorted
+        const levels = Object.keys(peopleByLevel).map(Number).sort((a, b) => a - b);
+
+        // Render the tree
+        function renderTree() {
+            const container = document.getElementById('treeContent');
+            container.innerHTML = '';
+
+            levels.forEach(level => {
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'level-container mb-4';
+                levelDiv.style.backgroundColor = getLevelColor(level);
+                levelDiv.style.padding = '20px';
+                levelDiv.style.borderRadius = '8px';
+                levelDiv.style.border = '2px solid ' + adjustColorBrightness(getLevelColor(level), -20);
+
+                const levelTitle = document.createElement('h4');
+                levelTitle.textContent = `Level ${level}`;
+                levelTitle.className = 'mb-3';
+                levelTitle.style.color = '#333';
+                levelDiv.appendChild(levelTitle);
+
+                const peopleContainer = document.createElement('div');
+                peopleContainer.className = 'd-flex flex-wrap gap-3';
+
+                peopleByLevel[level].forEach(person => {
+                    const personBox = createPersonBox(person);
+                    peopleContainer.appendChild(personBox);
+                });
+
+                levelDiv.appendChild(peopleContainer);
+                container.appendChild(levelDiv);
+            });
+
+            // Draw spouse connections
+            drawSpouseConnections();
+        }
+
+        function createPersonBox(person) {
+            const box = document.createElement('div');
+            box.className = 'person-box';
+            box.dataset.personName = person.name;
+            box.style.cssText = `
+                padding: 12px 20px;
+                background-color: white;
+                border: 2px solid #333;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.3s;
+                position: relative;
+                min-width: 150px;
+                text-align: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            `;
+
+            box.innerHTML = `<strong>${escapeHtml(person.name)}</strong>`;
+
+            box.addEventListener('mouseenter', () => {
+                box.style.transform = 'scale(1.05)';
+                box.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            });
+
+            box.addEventListener('mouseleave', () => {
+                box.style.transform = 'scale(1)';
+                box.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            });
+
+            return box;
+        }
+
+        function drawSpouseConnections() {
+            const container = document.getElementById('treeContent');
+            const wrapper = document.getElementById('treeContentWrapper');
+            const svg = document.getElementById('spouseConnections');
+            
+            // Clear existing lines
+            svg.innerHTML = '';
+            
+            // Set SVG size to match container
+            const containerRect = container.getBoundingClientRect();
+            const scrollHeight = container.scrollHeight;
+            const scrollWidth = container.scrollWidth;
+            
+            svg.setAttribute('width', scrollWidth || containerRect.width);
+            svg.setAttribute('height', scrollHeight || containerRect.height);
+            
+            const drawnConnections = new Set();
+
+            treeData.forEach(person => {
+                if (person.spouses && person.spouses.length > 0) {
+                    person.spouses.forEach(spouseName => {
+                        const connectionKey = [person.name, spouseName].sort().join('|');
+                        
+                        if (!drawnConnections.has(connectionKey)) {
+                            drawnConnections.add(connectionKey);
+                            
+                            const personBox = container.querySelector(`[data-person-name="${person.name}"]`);
+                            const spouseBox = container.querySelector(`[data-person-name="${spouseName}"]`);
+
+                            if (personBox && spouseBox && personBox !== spouseBox) {
+                                const personRect = personBox.getBoundingClientRect();
+                                const spouseRect = spouseBox.getBoundingClientRect();
+                                const wrapperRect = wrapper.getBoundingClientRect();
+
+                                // Calculate positions relative to wrapper
+                                const personX = personRect.left + personRect.width / 2 - wrapperRect.left;
+                                const personY = personRect.top + personRect.height / 2 - wrapperRect.top;
+                                const spouseX = spouseRect.left + spouseRect.width / 2 - wrapperRect.left;
+                                const spouseY = spouseRect.top + spouseRect.height / 2 - wrapperRect.top;
+
+                                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                                line.setAttribute('x1', personX);
+                                line.setAttribute('y1', personY);
+                                line.setAttribute('x2', spouseX);
+                                line.setAttribute('y2', spouseY);
+                                line.setAttribute('stroke', '#FF6B6B');
+                                line.setAttribute('stroke-width', '2');
+                                line.setAttribute('stroke-dasharray', '5,5');
+                                line.setAttribute('opacity', '0.7');
+                                svg.appendChild(line);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function adjustColorBrightness(hex, percent) {
+            const num = parseInt(hex.replace("#", ""), 16);
+            const r = Math.min(255, Math.max(0, (num >> 16) + percent));
+            const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + percent));
+            const b = Math.min(255, Math.max(0, (num & 0x0000FF) + percent));
+            return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Update connections on scroll and resize
+        let updateTimer;
+        function scheduleConnectionUpdate() {
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(drawSpouseConnections, 50);
+        }
+
+        // Initialize tree when page loads
+        window.addEventListener('load', () => {
+            renderTree();
+            // Delay to ensure layout is complete
+            setTimeout(drawSpouseConnections, 100);
+            
+            // Setup scroll listener after DOM is ready
+            const wrapper = document.getElementById('treeContentWrapper');
+            if (wrapper) {
+                wrapper.addEventListener('scroll', scheduleConnectionUpdate);
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            renderTree();
+            setTimeout(drawSpouseConnections, 100);
+        });
+    </script>
+}
+
+<style>
+    .tree-container {
+        min-height: 100vh;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+
+    .tree-content-wrapper {
+        position: relative;
+        overflow: auto;
+        max-height: calc(100vh - 120px);
+    }
+
+    .tree-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .spouse-connections {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .person-box {
+        user-select: none;
+    }
+
+    .level-container {
+        position: relative;
+    }
+</style>
