@@ -103,26 +103,89 @@
             return Object.keys(peopleByLevel).map(Number).sort((a, b) => a - b);
         }
 
-        // Organize people in each level so spouses are adjacent
+        // Organize people in each level so spouses and siblings are adjacent
         function organizeLevelPeople(people) {
             const processed = new Set();
             const result = [];
             
+            // Build a map of siblings at the same level
+            const siblingGroups = new Map();
+            
+            people.forEach(person => {
+                if (person.siblings && person.siblings.length > 0) {
+                    // Get siblings at the same level
+                    const sameLevelSiblings = person.siblings
+                        .map(siblingName => personMap.get(siblingName))
+                        .filter(sibling => sibling && sibling.level === person.level);
+                    
+                    if (sameLevelSiblings.length > 0) {
+                        // Create a group key from sorted names of all siblings including this person
+                        const allSiblings = [person, ...sameLevelSiblings];
+                        const siblingNames = allSiblings.map(p => p.name).sort();
+                        const groupKey = siblingNames.join('|');
+                        
+                        // Store the group if not already stored
+                        if (!siblingGroups.has(groupKey)) {
+                            siblingGroups.set(groupKey, allSiblings);
+                        }
+                    }
+                }
+            });
+            
+            // Process people: first handle those with siblings, then others
+            const siblingGroupKeysProcessed = new Set();
+            
             people.forEach(person => {
                 if (processed.has(person.name)) return;
                 
-                processed.add(person.name);
-                result.push(person);
+                // Check if this person is part of a sibling group
+                let siblingGroup = null;
+                let groupKey = null;
                 
-                // Add spouses right after the person
-                if (person.spouses && person.spouses.length > 0) {
-                    person.spouses.forEach(spouseName => {
-                        const spouse = personMap.get(spouseName);
-                        if (spouse && !processed.has(spouseName) && spouse.level === person.level) {
-                            processed.add(spouseName);
-                            result.push(spouse);
+                for (const [key, group] of siblingGroups.entries()) {
+                    if (group.some(p => p.name === person.name) && !siblingGroupKeysProcessed.has(key)) {
+                        siblingGroup = group;
+                        groupKey = key;
+                        break;
+                    }
+                }
+                
+                // If part of a sibling group, add all siblings together
+                if (siblingGroup) {
+                    siblingGroupKeysProcessed.add(groupKey);
+                    
+                    siblingGroup.forEach(sibling => {
+                        if (!processed.has(sibling.name)) {
+                            processed.add(sibling.name);
+                            result.push(sibling);
+                            
+                            // Add spouses right after the sibling
+                            if (sibling.spouses && sibling.spouses.length > 0) {
+                                sibling.spouses.forEach(spouseName => {
+                                    const spouse = personMap.get(spouseName);
+                                    if (spouse && !processed.has(spouseName) && spouse.level === sibling.level) {
+                                        processed.add(spouseName);
+                                        result.push(spouse);
+                                    }
+                                });
+                            }
                         }
                     });
+                } else {
+                    // Person without siblings (or siblings not at same level)
+                    processed.add(person.name);
+                    result.push(person);
+                    
+                    // Add spouses right after the person
+                    if (person.spouses && person.spouses.length > 0) {
+                        person.spouses.forEach(spouseName => {
+                            const spouse = personMap.get(spouseName);
+                            if (spouse && !processed.has(spouseName) && spouse.level === person.level) {
+                                processed.add(spouseName);
+                                result.push(spouse);
+                            }
+                        });
+                    }
                 }
             });
             

@@ -1,0 +1,410 @@
+[
+  {
+    "name" : "MassaA",
+    "isImplicit" : false,
+    "level" : 1,
+    "children" : [
+      "FarahMA",
+      "FerrisMA"
+    ],
+    "parents" : [
+      "MrAlloul",
+      "MrsAlloul"
+    ],
+    "siblings" : [
+
+    ],
+    "spouses" : [
+      "MarwanNA"
+    ],
+    "id" : "D241018F-6667-474D-8F68-BAC3CC2E7AA2"
+  },
+  {
+    "name" : "MansourAH",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+      "MalakMH",
+      "HanaMH"
+    ],
+    "parents" : [
+      "AhmedHH",
+      "MayNA"
+    ],
+    "siblings" : [
+      "TaymourAH",
+      "NadiaAH"
+    ],
+    "spouses" : [
+      "NourME"
+    ],
+    "id" : "B36F4BED-779D-4549-8B93-69ACAD6604F6"
+  },
+  {
+    "name" : "AhmedHH",
+    "isImplicit" : false,
+    "level" : 1,
+    "children" : [
+      "MansourAH",
+      "NadiaAH",
+      "TaymourAH"
+    ],
+    "parents" : [
+      "OHeikal",
+      "THedayat"
+    ],
+    "siblings" : [
+      "AlyHH_Senior",
+      "HassanHH"
+    ],
+    "spouses" : [
+      "MayNA"
+    ],
+    "id" : "A385F7FB-4B5A-4AEE-8D3E-8D4346C7FFC1"
+  },
+  {
+    "name" : "HanaMH",
+    "isImplicit" : false,
+    "level" : 3,
+    "children" : [
+
+    ],
+    "parents" : [
+      "MansourAH",
+      "NourME"
+    ],
+    "siblings" : [
+      "MalakMH"
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "E2EA1AED-875C-4E05-8EE2-016F19D4F484"
+  },
+  {
+    "name" : "MalakMH",
+    "isImplicit" : false,
+    "level" : 3,
+    "children" : [
+
+    ],
+    "parents" : [
+      "MansourAH",
+      "NourME"
+    ],
+    "siblings" : [
+      "HanaMH"
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "8CD1696F-1487-4D71-898F-3BAADCE0BD0E"
+  },
+  {
+    "name" : "TaliaHA",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+
+    ],
+    "parents" : [
+      "HeshamNA",
+      "DinaOH"
+    ],
+    "siblings" : [
+      "SeifHA"
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "97A58E7A-5BD4-4C6F-9E9C-CB8ED0BDEB6E"
+  },
+  {
+    "name" : "HeshamNA",
+    "isImplicit" : false,
+    "level" : 1,
+    "children" : [
+      "TaliaHA",
+      "SeifHA"
+    ],
+    "parents" : [
+      "NabilAraby",
+      "TNadia"
+    ],
+    "siblings" : [
+      "NadiaAH",
+      "MarwanNA",
+      "MayNA"
+    ],
+    "spouses" : [
+      "DinaOH"
+    ],
+    "id" : "EFCE52C9-6741-4052-BC7F-577DD5146108"
+  },
+  {
+    "name" : "SeifHA",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+
+    ],
+    "parents" : [
+      "HeshamNA",
+      "DinaOH"
+    ],
+    "siblings" : [
+      "TaliaHA"
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "08F5779A-CF7E-4AC9-A36F-C98FC0CB7A82"
+  },
+  {
+    "name" : "MayNA",
+    "isImplicit" : false,
+    "level" : 1,
+    "children" : [
+      "MansourAH",
+      "NadiaAH",
+      "TaymourAH"
+    ],
+    "parents" : [
+      "NabilAraby",
+      "TNadia"
+    ],
+    "siblings" : [
+      "MarwanNA",
+      "HeshamNA"
+    ],
+    "spouses" : [
+      "AhmedHH"
+    ],
+    "id" : "FD179DDA-2BED-4427-873F-7C3C9BBB28FC"
+  },
+  {
+    "name" : "TaymourAH",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+      "AminTH"
+    ],
+    "parents" : [
+      "AhmedHH",
+      "MayNA"
+    ],
+    "siblings" : [
+      "MansourAH",
+      "NadiaAH"
+    ],
+    "spouses" : [
+      "FaridaHL"
+    ],
+    "id" : "45C08428-EAB1-474B-9424-AD35DA00C9FA"
+  },
+  {
+    "name" : "FarahMA",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+
+    ],
+    "parents" : [
+      "MarwanNA",
+      "MassaA"
+    ],
+    "siblings" : [
+      "FerrisMA"
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "7138616C-10EB-433B-972C-57C09B97BB3C"
+  },
+  {
+    "name" : "DinaOH",
+    "isImplicit" : false,
+    "level" : 1,
+    "children" : [
+      "TaliaHA",
+      "SeifHA"
+    ],
+    "parents" : [
+      "DrO",
+      "MrsO"
+    ],
+    "siblings" : [
+
+    ],
+    "spouses" : [
+      "HeshamNA"
+    ],
+    "id" : "A3E5908E-27C5-4A24-AF4D-95A66B7B3721"
+  },
+  {
+    "name" : "NabilAraby",
+    "isImplicit" : false,
+    "level" : 0,
+    "children" : [
+      "MarwanNA",
+      "MayNA",
+      "HeshamNA"
+    ],
+    "parents" : [
+
+    ],
+    "siblings" : [
+      "TNadia"
+    ],
+    "spouses" : [
+      "TNadia"
+    ],
+    "id" : "8526180B-F1C5-40B7-9412-A55D43DF1096"
+  },
+  {
+    "name" : "FerrisMA",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+
+    ],
+    "parents" : [
+      "MarwanNA",
+      "MassaA"
+    ],
+    "siblings" : [
+      "FarahMA"
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "909A8615-7DED-4861-A1E8-6A7C9746FA14"
+  },
+  {
+    "name" : "AminTH",
+    "isImplicit" : false,
+    "level" : 3,
+    "children" : [
+
+    ],
+    "parents" : [
+      "TaymourAH",
+      "FaridaHL"
+    ],
+    "siblings" : [
+
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "2D8E1C04-2271-4151-AA5F-8A8E83EBBAAA"
+  },
+  {
+    "name" : "TNadia",
+    "isImplicit" : false,
+    "level" : 0,
+    "children" : [
+      "MarwanNA",
+      "MayNA",
+      "HeshamNA"
+    ],
+    "parents" : [
+
+    ],
+    "siblings" : [
+      "TEffat",
+      "EmadTaymour",
+      "TEsmat",
+      "THedayat",
+      "MhmdTaymour",
+      "NabilAraby"
+    ],
+    "spouses" : [
+      "NabilAraby"
+    ],
+    "id" : "7B09C188-445C-4172-9A86-0EFC4221F587"
+  },
+  {
+    "name" : "NourME",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+      "MalakMH",
+      "HanaMH"
+    ],
+    "parents" : [
+      "SaedME",
+      "MohgaMM"
+    ],
+    "siblings" : [
+      "YasminaME"
+    ],
+    "spouses" : [
+      "MansourAH"
+    ],
+    "id" : "14325298-591E-495C-BD68-877285D9F089"
+  },
+  {
+    "name" : "FaridaHL",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+      "AminTH"
+    ],
+    "parents" : [
+      "MrLeheta",
+      "MrsLeheta"
+    ],
+    "siblings" : [
+
+    ],
+    "spouses" : [
+      "TaymourAH"
+    ],
+    "id" : "54EF6341-CFBB-458E-BA32-F67F38EFFFA4"
+  },
+  {
+    "name" : "NadiaAH",
+    "isImplicit" : false,
+    "level" : 2,
+    "children" : [
+
+    ],
+    "parents" : [
+      "MayNA",
+      "AhmedHH"
+    ],
+    "siblings" : [
+      "MarwanNA",
+      "HeshamNA",
+      "MansourAH",
+      "TaymourAH"
+    ],
+    "spouses" : [
+
+    ],
+    "id" : "FE620BF9-215E-4F60-896F-40FB2A3DD783"
+  },
+  {
+    "name" : "MarwanNA",
+    "isImplicit" : false,
+    "level" : 1,
+    "children" : [
+      "FarahMA",
+      "FerrisMA"
+    ],
+    "parents" : [
+      "NabilAraby",
+      "TNadia"
+    ],
+    "siblings" : [
+      "HeshamNA",
+      "NadiaAH",
+      "MayNA"
+    ],
+    "spouses" : [
+      "MassaA"
+    ],
+    "id" : "F83C1EA5-3B0B-4C19-90DF-862FFD726634"
+  }
+]

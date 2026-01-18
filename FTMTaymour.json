@@ -1,0 +1,226 @@
+[
+  {
+    "siblings" : [
+      "SherifMT"
+    ],
+    "isImplicit" : false,
+    "id" : "145D6C69-7C6A-4E62-A2D3-C6C77B0B51E8",
+    "children" : [
+      "GihaneET",
+      "MaysaET",
+      "AlyaET"
+    ],
+    "parents" : [
+      "MhmdTaymour",
+      "MaysaNour"
+    ],
+    "spouses" : [
+      "HedyIslam"
+    ],
+    "level" : 1,
+    "name" : "ElwyMT"
+  },
+  {
+    "siblings" : [
+      "MhmdTaymour",
+      "TarekNour"
+    ],
+    "isImplicit" : false,
+    "id" : "FE7426ED-D392-45FD-9DD9-72C5B86B8AB0",
+    "children" : [
+      "ElwyMT",
+      "SherifMT"
+    ],
+    "parents" : [
+
+    ],
+    "spouses" : [
+      "MhmdTaymour"
+    ],
+    "level" : 0,
+    "name" : "MaysaNour"
+  },
+  {
+    "siblings" : [
+      "AlyaET",
+      "MaysaET",
+      "AleyaET"
+    ],
+    "isImplicit" : false,
+    "id" : "D251F445-10CF-4A76-B75D-41B893638859",
+    "children" : [
+
+    ],
+    "parents" : [
+      "ElwyMT",
+      "HedyIslam"
+    ],
+    "spouses" : [
+
+    ],
+    "level" : 2,
+    "name" : "GihaneET"
+  },
+  {
+    "siblings" : [
+      "MaysaNour",
+      "EmadTaymour"
+    ],
+    "isImplicit" : false,
+    "id" : "194E5992-9783-4766-97FA-E41F3BFAE2CA",
+    "children" : [
+      "ElwyMT",
+      "SherifMT"
+    ],
+    "parents" : [
+
+    ],
+    "spouses" : [
+      "MaysaNour"
+    ],
+    "level" : 0,
+    "name" : "MhmdTaymour"
+  },
+  {
+    "siblings" : [
+      "ElwyMT"
+    ],
+    "isImplicit" : false,
+    "id" : "1C34F8C5-E624-42B1-9F75-DCFCF6D6B2C3",
+    "children" : [
+      "MohamedST",
+      "IsmailST"
+    ],
+    "parents" : [
+      "MhmdTaymour",
+      "MaysaNour"
+    ],
+    "spouses" : [
+      "NihalHalbouny"
+    ],
+    "level" : 1,
+    "name" : "SherifMT"
+  },
+  {
+    "siblings" : [
+      "IsmailST"
+    ],
+    "isImplicit" : false,
+    "id" : "372DDAA4-99C6-43AA-8422-440EA3091DEE",
+    "children" : [
+
+    ],
+    "parents" : [
+      "SherifSt",
+      "NihalHalbouny",
+      "SherifMT"
+    ],
+    "spouses" : [
+
+    ],
+    "level" : 2,
+    "name" : "MohamedST"
+  },
+  {
+    "siblings" : [
+
+    ],
+    "isImplicit" : false,
+    "id" : "EBD536AA-26C7-4CA7-AF98-586F5AA2F226",
+    "children" : [
+      "GihaneET",
+      "MaysaET",
+      "AlyaET"
+    ],
+    "parents" : [
+      "MrIslam",
+      "MrsIslam"
+    ],
+    "spouses" : [
+      "ElwyMT"
+    ],
+    "level" : 1,
+    "name" : "HedyIslam"
+  },
+  {
+    "siblings" : [
+
+    ],
+    "isImplicit" : false,
+    "id" : "70D5FA66-55FF-43E5-99FB-A39079CE14FD",
+    "children" : [
+      "MohamedST",
+      "IsmailST"
+    ],
+    "parents" : [
+      "MrH",
+      "MrsH"
+    ],
+    "spouses" : [
+      "SherifMT"
+    ],
+    "level" : 1,
+    "name" : "NihalHalbouny"
+  },
+  {
+    "siblings" : [
+      "GihaneET",
+      "MaysaET"
+    ],
+    "isImplicit" : false,
+    "id" : "929D9062-04C1-41F2-897A-80E74BDEA1D0",
+    "children" : [
+
+    ],
+    "parents" : [
+      "ElwyMT",
+      "HedyIslam"
+    ],
+    "spouses" : [
+
+    ],
+    "level" : 2,
+    "name" : "AleyaET"
+  },
+  {
+    "siblings" : [
+      "MohamedST"
+    ],
+    "isImplicit" : false,
+    "id" : "DB000AE6-8EFF-4DBF-8BC1-A3DD83FE210D",
+    "children" : [
+
+    ],
+    "parents" : [
+      "SherifSt",
+      "NihalHalbouny",
+      "SherifMT"
+    ],
+    "spouses" : [
+
+    ],
+    "level" : 2,
+    "name" : "IsmailST"
+  },
+  {
+    "siblings" : [
+      "AlyaET",
+      "GihaneET",
+      "AleyaET"
+    ],
+    "isImplicit" : false,
+    "id" : "80450FA4-7050-4721-83BB-D65D06F6D72C",
+    "children" : [
+
+    ],
+    "parents" : [
+      "ElwyMT",
+      "HedyIslam"
+    ],
+    "spouses" : [
+
+    ],
+    "level" : 2,
+    "name" : "MaysaET"
+  }
+]
