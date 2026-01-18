@@ -6,8 +6,11 @@
 
 <div class="tree-container">
     <div class="tree-header bg-light p-3 mb-3 d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">Family Tree: @Model.FileName</h3>
-        <a href="/" class="btn btn-secondary">Select Another File</a>
+        <h3 class="mb-0" id="treeTitle">Family Tree: @Model.FileName</h3>
+        <div>
+            <button id="exitFocusBtn" class="btn btn-warning me-2" style="display: none;">Exit Focus Mode</button>
+            <a href="/" class="btn btn-secondary">Select Another File</a>
+        </div>
     </div>
     <div class="tree-content" id="treeContent">
         <!-- Tree will be rendered here by JavaScript -->
@@ -16,7 +19,10 @@
 
 @section Scripts {
     <script>
-        const treeData = @Html.Raw(Model.JsonContent);
+        const fullTreeData = @Html.Raw(Model.JsonContent);
+        let treeData = fullTreeData;
+        let focusedPersonName = null;
+        let isFocusMode = false;
         
         // Level color mapping
         const levelColors = {
@@ -34,23 +40,68 @@
             return levelColors[level] || '#F5F5F5'; // Default gray
         }
 
-        // Create a map for quick person lookup
+        // Create a map for quick person lookup (always use full tree data)
         const personMap = new Map();
-        treeData.forEach(person => {
+        fullTreeData.forEach(person => {
             personMap.set(person.name, person);
         });
 
-        // Group people by level
-        const peopleByLevel = {};
-        treeData.forEach(person => {
-            if (!peopleByLevel[person.level]) {
-                peopleByLevel[person.level] = [];
+        // Filter tree data to show only related people for focus mode
+        function filterTreeForFocus(personName) {
+            const focusedPerson = personMap.get(personName);
+            if (!focusedPerson) return fullTreeData;
+
+            const relatedNames = new Set([personName]);
+
+            // Add parents
+            if (focusedPerson.parents) {
+                focusedPerson.parents.forEach(parentName => {
+                    relatedNames.add(parentName);
+                });
             }
+
+            // Add spouses
+            if (focusedPerson.spouses) {
+                focusedPerson.spouses.forEach(spouseName => {
+                    relatedNames.add(spouseName);
+                });
+            }
+
+            // Add siblings
+            if (focusedPerson.siblings) {
+                focusedPerson.siblings.forEach(siblingName => {
+                    relatedNames.add(siblingName);
+                });
+            }
+
+            // Add children
+            if (focusedPerson.children) {
+                focusedPerson.children.forEach(childName => {
+                    relatedNames.add(childName);
+                });
+            }
+
+            // Return filtered data - only people in the related set
+            // But we need to preserve relationships, so filter the full tree
+            return fullTreeData.filter(person => relatedNames.has(person.name));
+        }
+
+        // Get current people by level from treeData
+        function getPeopleByLevel() {
+            const peopleByLevel = {};
+            treeData.forEach(person => {
+                if (!peopleByLevel[person.level]) {
+                    peopleByLevel[person.level] = [];
+                }
             peopleByLevel[person.level].push(person);
-        });
+            });
+            return peopleByLevel;
+        }
 
         // Get all levels sorted
-        const levels = Object.keys(peopleByLevel).map(Number).sort((a, b) => a - b);
+        function getLevels(peopleByLevel) {
+            return Object.keys(peopleByLevel).map(Number).sort((a, b) => a - b);
+        }
 
         // Organize people in each level so spouses are adjacent
         function organizeLevelPeople(people) {
@@ -78,10 +129,44 @@
             return result;
         }
 
+        // Enter focus mode
+        function enterFocusMode(personName) {
+            focusedPersonName = personName;
+            isFocusMode = true;
+            treeData = filterTreeForFocus(personName);
+            
+            // Show exit button
+            document.getElementById('exitFocusBtn').style.display = 'inline-block';
+            
+            // Update title
+            const focusedPerson = personMap.get(personName);
+            document.getElementById('treeTitle').textContent = `Family Tree: @Model.FileName (Focus: ${personName})`;
+            
+            renderTree();
+        }
+
+        // Exit focus mode
+        function exitFocusMode() {
+            focusedPersonName = null;
+            isFocusMode = false;
+            treeData = fullTreeData;
+            
+            // Hide exit button
+            document.getElementById('exitFocusBtn').style.display = 'none';
+            
+            // Restore title
+            document.getElementById('treeTitle').textContent = 'Family Tree: @Model.FileName';
+            
+            renderTree();
+        }
+
         // Render the tree
         function renderTree() {
             const container = document.getElementById('treeContent');
             container.innerHTML = '';
+
+            const peopleByLevel = getPeopleByLevel();
+            const levels = getLevels(peopleByLevel);
 
             levels.forEach(level => {
                 const levelDiv = document.createElement('div');
@@ -135,10 +220,16 @@
             const box = document.createElement('div');
             box.className = 'person-box';
             box.dataset.personName = person.name;
+            
+            // Check if this is the focused person
+            const isFocused = isFocusMode && person.name === focusedPersonName;
+            const borderColor = isFocused ? '#dc3545' : '#333';
+            const backgroundColor = isFocused ? '#ffcccc' : 'white';
+            
             box.style.cssText = `
                 padding: 12px 20px;
-                background-color: white;
-                border: 2px solid #333;
+                background-color: ${backgroundColor};
+                border: 3px solid ${borderColor};
                 border-radius: 6px;
                 cursor: pointer;
                 transition: all 0.3s;
@@ -151,6 +242,14 @@
 
             box.innerHTML = `<strong>${escapeHtml(person.name)}</strong>`;
 
+            // Add click handler for focus mode
+            box.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!isFocusMode || person.name !== focusedPersonName) {
+                    enterFocusMode(person.name);
+                }
+            });
+
             box.addEventListener('mouseenter', () => {
                 box.style.transform = 'scale(1.05)';
                 box.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
@@ -158,7 +257,11 @@
 
             box.addEventListener('mouseleave', () => {
                 box.style.transform = 'scale(1)';
-                box.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                if (!isFocused) {
+                    box.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                } else {
+                    box.style.boxShadow = '0 2px 4px rgba(220, 53, 69, 0.3)';
+                }
             });
 
             return box;
@@ -207,6 +310,12 @@
         // Initialize tree when page loads
         window.addEventListener('load', () => {
             renderTree();
+            
+            // Setup exit focus button listener
+            const exitBtn = document.getElementById('exitFocusBtn');
+            if (exitBtn) {
+                exitBtn.addEventListener('click', exitFocusMode);
+            }
         });
 
         window.addEventListener('resize', () => {
