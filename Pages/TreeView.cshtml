@@ -9,11 +9,8 @@
         <h3 class="mb-0">Family Tree: @Model.FileName</h3>
         <a href="/" class="btn btn-secondary">Select Another File</a>
     </div>
-    <div class="tree-content-wrapper" id="treeContentWrapper">
-        <div class="tree-content" id="treeContent">
-            <!-- Tree will be rendered here by JavaScript -->
-        </div>
-        <svg id="spouseConnections" class="spouse-connections"></svg>
+    <div class="tree-content" id="treeContent">
+        <!-- Tree will be rendered here by JavaScript -->
     </div>
 </div>
 
@@ -55,6 +52,32 @@
         // Get all levels sorted
         const levels = Object.keys(peopleByLevel).map(Number).sort((a, b) => a - b);
 
+        // Organize people in each level so spouses are adjacent
+        function organizeLevelPeople(people) {
+            const processed = new Set();
+            const result = [];
+            
+            people.forEach(person => {
+                if (processed.has(person.name)) return;
+                
+                processed.add(person.name);
+                result.push(person);
+                
+                // Add spouses right after the person
+                if (person.spouses && person.spouses.length > 0) {
+                    person.spouses.forEach(spouseName => {
+                        const spouse = personMap.get(spouseName);
+                        if (spouse && !processed.has(spouseName) && spouse.level === person.level) {
+                            processed.add(spouseName);
+                            result.push(spouse);
+                        }
+                    });
+                }
+            });
+            
+            return result;
+        }
+
         // Render the tree
         function renderTree() {
             const container = document.getElementById('treeContent');
@@ -74,20 +97,38 @@
                 levelTitle.style.color = '#333';
                 levelDiv.appendChild(levelTitle);
 
+                // Create horizontally scrollable container
                 const peopleContainer = document.createElement('div');
-                peopleContainer.className = 'd-flex flex-wrap gap-3';
-
-                peopleByLevel[level].forEach(person => {
+                peopleContainer.className = 'level-people-container';
+                
+                // Organize people so spouses are adjacent
+                const organizedPeople = organizeLevelPeople(peopleByLevel[level]);
+                
+                organizedPeople.forEach((person, index) => {
                     const personBox = createPersonBox(person);
                     peopleContainer.appendChild(personBox);
+                    
+                    // Check if next person is a spouse (bidirectional check) and add connection line
+                    if (index < organizedPeople.length - 1) {
+                        const nextPerson = organizedPeople[index + 1];
+                        const isSpouse = (person.spouses && person.spouses.includes(nextPerson.name)) ||
+                                        (nextPerson.spouses && nextPerson.spouses.includes(person.name));
+                        if (isSpouse) {
+                            const connector = createSpouseConnector();
+                            peopleContainer.appendChild(connector);
+                        } else {
+                            // Add space between non-spouse boxes
+                            const spacer = document.createElement('div');
+                            spacer.style.width = '20px';
+                            spacer.style.flexShrink = '0';
+                            peopleContainer.appendChild(spacer);
+                        }
+                    }
                 });
 
                 levelDiv.appendChild(peopleContainer);
                 container.appendChild(levelDiv);
             });
-
-            // Draw spouse connections
-            drawSpouseConnections();
         }
 
         function createPersonBox(person) {
@@ -103,6 +144,7 @@
                 transition: all 0.3s;
                 position: relative;
                 min-width: 150px;
+                flex-shrink: 0;
                 text-align: center;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             `;
@@ -122,61 +164,25 @@
             return box;
         }
 
-        function drawSpouseConnections() {
-            const container = document.getElementById('treeContent');
-            const wrapper = document.getElementById('treeContentWrapper');
-            const svg = document.getElementById('spouseConnections');
+        function createSpouseConnector() {
+            const connector = document.createElement('div');
+            connector.className = 'spouse-connector';
+            connector.style.cssText = `
+                width: 40px;
+                height: 2px;
+                background: repeating-linear-gradient(
+                    to right,
+                    #FF6B6B 0px,
+                    #FF6B6B 5px,
+                    transparent 5px,
+                    transparent 10px
+                );
+                margin: 0 10px;
+                flex-shrink: 0;
+                align-self: center;
+            `;
             
-            // Clear existing lines
-            svg.innerHTML = '';
-            
-            // Set SVG size to match container
-            const containerRect = container.getBoundingClientRect();
-            const scrollHeight = container.scrollHeight;
-            const scrollWidth = container.scrollWidth;
-            
-            svg.setAttribute('width', scrollWidth || containerRect.width);
-            svg.setAttribute('height', scrollHeight || containerRect.height);
-            
-            const drawnConnections = new Set();
-
-            treeData.forEach(person => {
-                if (person.spouses && person.spouses.length > 0) {
-                    person.spouses.forEach(spouseName => {
-                        const connectionKey = [person.name, spouseName].sort().join('|');
-                        
-                        if (!drawnConnections.has(connectionKey)) {
-                            drawnConnections.add(connectionKey);
-                            
-                            const personBox = container.querySelector(`[data-person-name="${person.name}"]`);
-                            const spouseBox = container.querySelector(`[data-person-name="${spouseName}"]`);
-
-                            if (personBox && spouseBox && personBox !== spouseBox) {
-                                const personRect = personBox.getBoundingClientRect();
-                                const spouseRect = spouseBox.getBoundingClientRect();
-                                const wrapperRect = wrapper.getBoundingClientRect();
-
-                                // Calculate positions relative to wrapper
-                                const personX = personRect.left + personRect.width / 2 - wrapperRect.left;
-                                const personY = personRect.top + personRect.height / 2 - wrapperRect.top;
-                                const spouseX = spouseRect.left + spouseRect.width / 2 - wrapperRect.left;
-                                const spouseY = spouseRect.top + spouseRect.height / 2 - wrapperRect.top;
-
-                                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                                line.setAttribute('x1', personX);
-                                line.setAttribute('y1', personY);
-                                line.setAttribute('x2', spouseX);
-                                line.setAttribute('y2', spouseY);
-                                line.setAttribute('stroke', '#FF6B6B');
-                                line.setAttribute('stroke-width', '2');
-                                line.setAttribute('stroke-dasharray', '5,5');
-                                line.setAttribute('opacity', '0.7');
-                                svg.appendChild(line);
-                            }
-                        }
-                    });
-                }
-            });
+            return connector;
         }
 
         function adjustColorBrightness(hex, percent) {
@@ -198,29 +204,13 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // Update connections on scroll and resize
-        let updateTimer;
-        function scheduleConnectionUpdate() {
-            clearTimeout(updateTimer);
-            updateTimer = setTimeout(drawSpouseConnections, 50);
-        }
-
         // Initialize tree when page loads
         window.addEventListener('load', () => {
             renderTree();
-            // Delay to ensure layout is complete
-            setTimeout(drawSpouseConnections, 100);
-            
-            // Setup scroll listener after DOM is ready
-            const wrapper = document.getElementById('treeContentWrapper');
-            if (wrapper) {
-                wrapper.addEventListener('scroll', scheduleConnectionUpdate);
-            }
         });
 
         window.addEventListener('resize', () => {
             renderTree();
-            setTimeout(drawSpouseConnections, 100);
         });
     </script>
 }
@@ -232,32 +222,52 @@
         background-color: #f8f9fa;
     }
 
-    .tree-content-wrapper {
-        position: relative;
-        overflow: auto;
+    .tree-content {
+        overflow-y: auto;
         max-height: calc(100vh - 120px);
     }
 
-    .tree-content {
+    .level-container {
         position: relative;
-        z-index: 2;
+        margin-bottom: 20px;
     }
 
-    .spouse-connections {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1;
+    .level-people-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        overflow-x: auto;
+        overflow-y: visible;
+        padding: 10px 0;
+        gap: 0;
+        min-height: 80px;
+    }
+
+    .level-people-container::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .level-people-container::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+    }
+
+    .level-people-container::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+    }
+
+    .level-people-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.5);
     }
 
     .person-box {
         user-select: none;
     }
 
-    .level-container {
-        position: relative;
+    .spouse-connector {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
