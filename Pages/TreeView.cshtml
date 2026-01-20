@@ -8,6 +8,9 @@
     <div class="tree-header bg-light p-3 mb-3 d-flex justify-content-between align-items-center">
         <h3 class="mb-0" id="treeTitle">Family Tree: @Model.FileName</h3>
         <div>
+            <button id="syncScrollBtn" class="btn btn-info me-2">
+                <span id="syncScrollIcon">🔗</span> Sync Scroll: <span id="syncScrollStatus">Off</span>
+            </button>
             <button id="exitFocusBtn" class="btn btn-warning me-2" style="display: none;">Exit Focus Mode</button>
             <a href="/" class="btn btn-secondary">Select Another File</a>
         </div>
@@ -23,6 +26,9 @@
         let treeData = fullTreeData;
         let focusedPersonName = null;
         let isFocusMode = false;
+        let isSyncScrollEnabled = false;
+        let isSyncing = false; // Flag to prevent recursive scroll events
+        const levelContainers = new Map(); // Map level number to container element
         
         // Level color mapping
         const levelColors = {
@@ -227,6 +233,7 @@
         function renderTree() {
             const container = document.getElementById('treeContent');
             container.innerHTML = '';
+            levelContainers.clear(); // Clear previous references
 
             const peopleByLevel = getPeopleByLevel();
             const levels = getLevels(peopleByLevel);
@@ -248,6 +255,13 @@
                 // Create horizontally scrollable container
                 const peopleContainer = document.createElement('div');
                 peopleContainer.className = 'level-people-container';
+                peopleContainer.dataset.level = level;
+                
+                // Store reference to this level container
+                levelContainers.set(level, peopleContainer);
+                
+                // Add scroll event listener for sync
+                peopleContainer.addEventListener('scroll', handleLevelScroll);
                 
                 // Organize people so spouses are adjacent
                 const organizedPeople = organizeLevelPeople(peopleByLevel[level]);
@@ -370,6 +384,123 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
+        // Get person at the left edge of a scrollable container
+        function getPersonAtLeftEdge(container) {
+            const containerRect = container.getBoundingClientRect();
+            const leftEdge = containerRect.left;
+            const centerY = containerRect.top + containerRect.height / 2;
+            
+            // Find all person boxes in this container
+            const personBoxes = container.querySelectorAll('.person-box');
+            let closestBox = null;
+            let closestDistance = Infinity;
+            
+            personBoxes.forEach(box => {
+                const boxRect = box.getBoundingClientRect();
+                // Check if box is visible and calculate distance from left edge
+                if (boxRect.top < centerY && boxRect.bottom > centerY) {
+                    const distance = Math.abs(boxRect.left - leftEdge);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestBox = box;
+                    }
+                }
+            });
+            
+            return closestBox ? closestBox.dataset.personName : null;
+        }
+
+        // Scroll container to show a specific person at the left edge
+        function scrollToPerson(container, personName) {
+            const personBox = container.querySelector(`[data-person-name="${personName}"]`);
+            if (!personBox) return false;
+            
+            const containerRect = container.getBoundingClientRect();
+            const boxRect = personBox.getBoundingClientRect();
+            const scrollLeft = container.scrollLeft;
+            const targetScroll = scrollLeft + (boxRect.left - containerRect.left);
+            
+            container.scrollTo({
+                left: targetScroll,
+                behavior: 'auto' // Instant scroll to avoid animation during sync
+            });
+            
+            return true;
+        }
+
+        // Handle scroll event on a level container
+        function handleLevelScroll(event) {
+            if (!isSyncScrollEnabled || isSyncing) return;
+            
+            const scrolledContainer = event.target;
+            const scrolledLevel = parseInt(scrolledContainer.dataset.level);
+            
+            // Get the person at the left edge of the scrolled container
+            const personName = getPersonAtLeftEdge(scrolledContainer);
+            if (!personName) return;
+            
+            const person = personMap.get(personName);
+            if (!person) return;
+            
+            // Set syncing flag to prevent recursive events
+            isSyncing = true;
+            
+            // Sync parent levels (higher level numbers = lower in tree, but we want to go up)
+            // Actually, level 0 is highest (grandparents), so lower level number = parent
+            if (person.parents && person.parents.length > 0) {
+                person.parents.forEach(parentName => {
+                    const parent = personMap.get(parentName);
+                    if (parent && parent.level < scrolledLevel) {
+                        const parentContainer = levelContainers.get(parent.level);
+                        if (parentContainer && parentContainer !== scrolledContainer) {
+                            scrollToPerson(parentContainer, parentName);
+                        }
+                    }
+                });
+            }
+            
+            // Sync child levels (higher level number = children)
+            if (person.children && person.children.length > 0) {
+                person.children.forEach(childName => {
+                    const child = personMap.get(childName);
+                    if (child && child.level > scrolledLevel) {
+                        const childContainer = levelContainers.get(child.level);
+                        if (childContainer && childContainer !== scrolledContainer) {
+                            scrollToPerson(childContainer, childName);
+                        }
+                    }
+                });
+            }
+            
+            // Reset syncing flag after a short delay
+            setTimeout(() => {
+                isSyncing = false;
+            }, 50);
+        }
+
+        // Toggle sync scroll feature
+        function toggleSyncScroll() {
+            isSyncScrollEnabled = !isSyncScrollEnabled;
+            const statusElement = document.getElementById('syncScrollStatus');
+            const iconElement = document.getElementById('syncScrollIcon');
+            const button = document.getElementById('syncScrollBtn');
+            
+            if (isSyncScrollEnabled) {
+                statusElement.textContent = 'On';
+                iconElement.textContent = '🔗';
+                button.classList.remove('btn-info');
+                button.classList.add('btn-success');
+            } else {
+                statusElement.textContent = 'Off';
+                iconElement.textContent = '🔗';
+                button.classList.remove('btn-success');
+                button.classList.add('btn-info');
+            }
+        }
+
+        // Make toggleSyncScroll globally available
+        window.toggleSyncScroll = toggleSyncScroll;
+
         // Initialize tree when page loads
         window.addEventListener('load', () => {
             renderTree();
@@ -378,6 +509,12 @@
             const exitBtn = document.getElementById('exitFocusBtn');
             if (exitBtn) {
                 exitBtn.addEventListener('click', exitFocusMode);
+            }
+            
+            // Setup sync scroll toggle button listener
+            const syncBtn = document.getElementById('syncScrollBtn');
+            if (syncBtn) {
+                syncBtn.addEventListener('click', toggleSyncScroll);
             }
         });
 
