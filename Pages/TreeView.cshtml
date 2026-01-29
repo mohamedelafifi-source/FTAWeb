@@ -1,7 +1,7 @@
-@page
+@page "{familyName}"
 @model TreeViewModel
 @{
-    ViewData["Title"] = "Family Tree";
+    ViewData["Title"] = "Family Tree: " + Model.FileName;
 }
 
 <div class="tree-container">
@@ -12,7 +12,7 @@
                 <span id="syncScrollIcon">🔗</span> Sync Scroll: <span id="syncScrollStatus">Off</span>
             </button>
             <button id="exitFocusBtn" class="btn btn-warning me-2" style="display: none;">Exit Focus Mode</button>
-            <a href="/" class="btn btn-secondary">Select Another File</a>
+            <a asp-page="/FamilyDetail" asp-route-familyName="@Model.FamilyName" class="btn btn-secondary">Back to Family</a>
         </div>
     </div>
     <div class="tree-content" id="treeContent">

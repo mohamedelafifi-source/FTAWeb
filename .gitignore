@@ -71,6 +71,9 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Family tree uploaded data (stored on server)
+App_Data/
+
 # StyleCop
 StyleCopReport.xml
 

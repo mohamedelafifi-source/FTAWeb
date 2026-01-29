@@ -2,6 +2,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddScoped<FTAWeb.Services.IFamilyStorageService, FTAWeb.Services.FamilyStorageService>();
 
 var app = builder.Build();
 

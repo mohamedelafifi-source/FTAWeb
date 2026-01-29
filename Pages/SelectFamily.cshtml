@@ -1,0 +1,37 @@
+@page
+@model SelectFamilyModel
+@{
+    ViewData["Title"] = "Select Family";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center mb-0">Update an Existing Family</h2>
+                </div>
+                <div class="card-body">
+                    @if (Model.Families.Count == 0)
+                    {
+                        <p class="text-muted mb-3">No families exist yet. Create a new family first.</p>
+                        <a asp-page="/Index" class="btn btn-secondary">Back</a>
+                    }
+                    else
+                    {
+                        <p class="mb-3">Select a family to manage its JSON files.</p>
+                        <div class="list-group">
+                            @foreach (var family in Model.Families)
+                            {
+                                <a asp-page="/FamilyDetail" asp-route-familyName="@family" class="list-group-item list-group-item-action">@family</a>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <a asp-page="/Index" class="btn btn-secondary">Back</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
