@@ -12,12 +12,12 @@
                     <h5 class="mb-0">Edit file name</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Current name: <strong>@Model.FileName</strong></p>
+                    <p class="text-muted">Current name: <strong>@(System.IO.Path.GetFileNameWithoutExtension(Model.FileName))</strong></p>
                     <form method="post" asp-route-familyName="@Model.FamilyName">
                         <input type="hidden" asp-for="FileName" />
                         <div class="mb-3">
                             <label asp-for="NewFileName" class="form-label">New file name</label>
-                            <input asp-for="NewFileName" class="form-control" placeholder="e.g. MyTree.json" />
+                            <input asp-for="NewFileName" class="form-control" placeholder="e.g. MyTree" />
                             <span asp-validation-for="NewFileName" class="text-danger"></span>
                         </div>
                         <div class="d-flex gap-2">

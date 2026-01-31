@@ -34,7 +34,7 @@ public class FamilyDetailModel : PageModel
             return RedirectToPage("/SelectFamily");
         if (jsonFile == null || jsonFile.Length == 0)
         {
-            TempData["Error"] = "Please select a valid JSON file.";
+            TempData["Error"] = "Please select a valid Tree file.";
             return RedirectToPage("/FamilyDetail", new { familyName = FamilyName });
         }
         var fileName = Path.GetFileName(jsonFile.FileName);
