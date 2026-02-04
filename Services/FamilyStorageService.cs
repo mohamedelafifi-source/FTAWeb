@@ -5,19 +5,53 @@ namespace FTAWeb.Services;
 public class FamilyStorageService : IFamilyStorageService
 {
     private readonly IWebHostEnvironment _env;
-    private const string FamiliesFolder = "App_Data/Families";
+    private readonly string _familiesBasePath;
+    private const string AttachmentsFolder = "attachments";
 
-    public FamilyStorageService(IWebHostEnvironment env)
+    private static readonly HashSet<string> AllowedAttachmentExtensions = new(StringComparer.OrdinalIgnoreCase)
+        { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf" };
+
+    private static readonly Dictionary<string, string> AttachmentContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { ".jpg", "image/jpeg" }, { ".jpeg", "image/jpeg" }, { ".png", "image/png" },
+        { ".gif", "image/gif" }, { ".webp", "image/webp" }, { ".pdf", "application/pdf" }
+    };
+
+    public FamilyStorageService(IWebHostEnvironment env, IConfiguration configuration)
     {
         _env = env;
+        _familiesBasePath = ResolveFamiliesBasePath(env, configuration);
+    }
+
+    /// <summary>
+    /// Resolves the writable path for family data. On Azure App Service the content root can be read-only
+    /// (Run From Package), so we use the persistent HOME directory when WEBSITE_SITE_NAME is set.
+    /// Override with FamilyStorage:BasePath in config (e.g. Azure app setting FamilyStorage__BasePath) if needed.
+    /// </summary>
+    private static string ResolveFamiliesBasePath(IWebHostEnvironment env, IConfiguration configuration)
+    {
+        var configuredPath = configuration["FamilyStorage:BasePath"]?.Trim();
+        if (!string.IsNullOrEmpty(configuredPath))
+            return Path.Combine(configuredPath, "Families");
+
+        // Azure App Service: use persistent home directory (content root may be read-only when Run From Package)
+        var websiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+        var home = Environment.GetEnvironmentVariable("HOME");
+        if (!string.IsNullOrEmpty(websiteName) && !string.IsNullOrEmpty(home))
+        {
+            var azurePath = Path.Combine(home, "data", "Families");
+            return azurePath;
+        }
+
+        // Local / default: use ContentRootPath
+        return Path.Combine(env.ContentRootPath, "App_Data", "Families");
     }
 
     public string GetFamiliesBasePath()
     {
-        var path = Path.Combine(_env.ContentRootPath, FamiliesFolder);
-        if (!Directory.Exists(path))
-            Directory.CreateDirectory(path);
-        return path;
+        if (!Directory.Exists(_familiesBasePath))
+            Directory.CreateDirectory(_familiesBasePath);
+        return _familiesBasePath;
     }
 
     private static string SanitizeFolderName(string name)
@@ -120,5 +154,77 @@ public class FamilyStorageService : IFamilyStorageService
         if (!Directory.Exists(path)) return false;
         Directory.Delete(path, true);
         return true;
+    }
+
+    private string GetAttachmentsPath(string familyName, string personName)
+    {
+        var personFolder = SanitizeFolderName(personName);
+        return Path.Combine(GetFamilyPath(familyName), AttachmentsFolder, personFolder);
+    }
+
+    public IReadOnlyList<string> ListAttachments(string familyName, string personName)
+    {
+        var path = GetAttachmentsPath(familyName, personName);
+        if (!Directory.Exists(path)) return Array.Empty<string>();
+        return Directory.GetFiles(path)
+            .Select(Path.GetFileName)
+            .Where(n => n != null && AllowedAttachmentExtensions.Contains(Path.GetExtension(n)))
+            .Cast<string>()
+            .OrderBy(n => n)
+            .ToList();
+    }
+
+    public async Task<string?> SaveAttachmentAsync(string familyName, string personName, IFormFile file, CancellationToken ct = default)
+    {
+        if (file == null || file.Length == 0) return null;
+        var ext = Path.GetExtension(file.FileName ?? "").ToLowerInvariant();
+        if (string.IsNullOrEmpty(ext) || !AllowedAttachmentExtensions.Contains(ext)) return null;
+
+        var path = GetAttachmentsPath(familyName, personName);
+        Directory.CreateDirectory(path);
+        var prefix = SanitizeFolderName(personName);
+        var existing = ListAttachments(familyName, personName);
+        var nextNum = 1;
+        foreach (var f in existing)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(f, @"^" + Regex.Escape(prefix) + @"-(\d+)\.");
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var n) && n >= nextNum)
+                nextNum = n + 1;
+        }
+        var fileName = $"{prefix}-{nextNum}{ext}";
+        var filePath = Path.Combine(path, fileName);
+        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            await file.CopyToAsync(fs, ct);
+        return fileName;
+    }
+
+    public bool DeleteAttachment(string familyName, string personName, string fileName)
+    {
+        var path = GetAttachmentsPath(familyName, personName);
+        var filePath = Path.Combine(path, fileName);
+        if (!File.Exists(filePath)) return false;
+        var ext = Path.GetExtension(fileName);
+        if (string.IsNullOrEmpty(ext) || !AllowedAttachmentExtensions.Contains(ext)) return false;
+        File.Delete(filePath);
+        return true;
+    }
+
+    public (Stream? stream, string? contentType) GetAttachment(string familyName, string personName, string fileName)
+    {
+        var filePath = GetAttachmentPath(familyName, personName, fileName);
+        if (filePath == null) return (null, null);
+        var ext = Path.GetExtension(fileName);
+        var contentType = AttachmentContentTypes.TryGetValue(ext, out var ct) ? ct : "application/octet-stream";
+        return (new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read), contentType);
+    }
+
+    public string? GetAttachmentPath(string familyName, string personName, string fileName)
+    {
+        var path = GetAttachmentsPath(familyName, personName);
+        var filePath = Path.Combine(path, fileName);
+        if (!File.Exists(filePath)) return null;
+        var ext = Path.GetExtension(fileName);
+        if (string.IsNullOrEmpty(ext) || !AllowedAttachmentExtensions.Contains(ext)) return null;
+        return filePath;
     }
 }

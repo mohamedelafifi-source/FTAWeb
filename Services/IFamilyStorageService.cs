@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace FTAWeb.Services;
 
 public interface IFamilyStorageService
@@ -13,4 +15,11 @@ public interface IFamilyStorageService
     bool RenameFile(string familyName, string oldFileName, string newFileName);
     bool DeleteFile(string familyName, string fileName);
     bool DeleteFamily(string familyName);
+
+    // Attachments (per family, per person) - same folder structure, can be swapped to BLOB later
+    IReadOnlyList<string> ListAttachments(string familyName, string personName);
+    Task<string?> SaveAttachmentAsync(string familyName, string personName, IFormFile file, CancellationToken ct = default);
+    bool DeleteAttachment(string familyName, string personName, string fileName);
+    (Stream? stream, string? contentType) GetAttachment(string familyName, string personName, string fileName);
+    string? GetAttachmentPath(string familyName, string personName, string fileName);
 }

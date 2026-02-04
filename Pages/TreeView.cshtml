@@ -5,13 +5,16 @@
 }
 
 <div class="tree-container">
-    <div class="tree-header bg-light p-3 mb-3 d-flex justify-content-between align-items-center">
+    <div class="tree-header bg-light p-3 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h3 class="mb-0" id="treeTitle">Family Tree: @Model.FileName</h3>
-        <div>
-            <button id="syncScrollBtn" class="btn btn-info me-2">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button id="attachmentModeBtn" class="btn btn-outline-primary" title="Turn on, then click a person to add or view their photos and documents">
+                📎 Attachment mode
+            </button>
+            <button id="syncScrollBtn" class="btn btn-info">
                 <span id="syncScrollIcon">🔗</span> Sync Scroll: <span id="syncScrollStatus">Off</span>
             </button>
-            <button id="exitFocusBtn" class="btn btn-warning me-2" style="display: none;">Exit Focus Mode</button>
+            <button id="exitFocusBtn" class="btn btn-warning" style="display: none;">Exit Focus Mode</button>
             <a asp-page="/FamilyDetail" asp-route-familyName="@Model.FamilyName" class="btn btn-secondary">Back to Family</a>
         </div>
     </div>
@@ -23,9 +26,12 @@
 @section Scripts {
     <script>
         const fullTreeData = @Html.Raw(Model.JsonContent);
+        const treeFamilyName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FamilyName));
+        const treeFileName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FileName));
         let treeData = fullTreeData;
         let focusedPersonName = null;
         let isFocusMode = false;
+        let isAttachmentMode = false;
         let isSyncScrollEnabled = false;
         let isSyncing = false; // Flag to prevent recursive scroll events
         const levelContainers = new Map(); // Map level number to container element
@@ -319,10 +325,13 @@
 
             box.innerHTML = `<strong>${escapeHtml(person.name)}</strong>`;
 
-            // Add click handler for focus mode
+            // Add click handler: Attachment mode -> go to attachment page; else focus on person
             box.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (!isFocusMode || person.name !== focusedPersonName) {
+                if (isAttachmentMode) {
+                    const url = '/AttachmentManagement/' + encodeURIComponent(treeFamilyName) + '?fileName=' + encodeURIComponent(treeFileName) + '&personName=' + encodeURIComponent(person.name);
+                    window.location.href = url;
+                } else if (!isFocusMode || person.name !== focusedPersonName) {
                     enterFocusMode(person.name);
                 }
             });
@@ -501,20 +510,33 @@
         // Make toggleSyncScroll globally available
         window.toggleSyncScroll = toggleSyncScroll;
 
+        function toggleAttachmentMode() {
+            isAttachmentMode = !isAttachmentMode;
+            const btn = document.getElementById('attachmentModeBtn');
+            if (btn) {
+                btn.textContent = isAttachmentMode ? 'Attachment mode (ON – click a person)' : 'Attachment mode';
+                btn.classList.remove('btn-outline-primary', 'btn-primary');
+                btn.classList.add(isAttachmentMode ? 'btn-primary' : 'btn-outline-primary');
+            }
+        }
+
         // Initialize tree when page loads
         window.addEventListener('load', () => {
             renderTree();
             
-            // Setup exit focus button listener
             const exitBtn = document.getElementById('exitFocusBtn');
             if (exitBtn) {
                 exitBtn.addEventListener('click', exitFocusMode);
             }
             
-            // Setup sync scroll toggle button listener
             const syncBtn = document.getElementById('syncScrollBtn');
             if (syncBtn) {
                 syncBtn.addEventListener('click', toggleSyncScroll);
+            }
+            
+            const attachmentBtn = document.getElementById('attachmentModeBtn');
+            if (attachmentBtn) {
+                attachmentBtn.addEventListener('click', toggleAttachmentMode);
             }
         });
 
