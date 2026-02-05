@@ -24,9 +24,10 @@ public class FamilyStorageService : IFamilyStorageService
     }
 
     /// <summary>
-    /// Resolves the writable path for family data. On Azure App Service the content root can be read-only
-    /// (Run From Package), so we use the persistent HOME directory when WEBSITE_SITE_NAME is set.
-    /// Override with FamilyStorage:BasePath in config (e.g. Azure app setting FamilyStorage__BasePath) if needed.
+    /// Resolves the writable path for family data. IMPORTANT: Always prefer the path that already
+    /// has data (e.g. App_Data/Families with existing family folders) so we never "hide" existing
+    /// data after a code change. New paths (e.g. HOME/data on Azure, or future BLOB) only when
+    /// the current location has no family data. Override with FamilyStorage:BasePath if needed.
     /// </summary>
     private static string ResolveFamiliesBasePath(IWebHostEnvironment env, IConfiguration configuration)
     {
@@ -34,7 +35,21 @@ public class FamilyStorageService : IFamilyStorageService
         if (!string.IsNullOrEmpty(configuredPath))
             return Path.Combine(configuredPath, "Families");
 
-        // Azure App Service: use persistent home directory (content root may be read-only when Run From Package)
+        var legacyPath = Path.Combine(env.ContentRootPath, "App_Data", "Families");
+
+        // Prefer existing data: if the old location has any family folders, keep using it
+        if (Directory.Exists(legacyPath))
+        {
+            try
+            {
+                var hasFamilies = Directory.GetDirectories(legacyPath).Length > 0;
+                if (hasFamilies)
+                    return legacyPath;
+            }
+            catch { /* ignore */ }
+        }
+
+        // Azure App Service (and no existing data in legacy path): use persistent home directory
         var websiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
         var home = Environment.GetEnvironmentVariable("HOME");
         if (!string.IsNullOrEmpty(websiteName) && !string.IsNullOrEmpty(home))
@@ -44,7 +59,7 @@ public class FamilyStorageService : IFamilyStorageService
         }
 
         // Local / default: use ContentRootPath
-        return Path.Combine(env.ContentRootPath, "App_Data", "Families");
+        return legacyPath;
     }
 
     public string GetFamiliesBasePath()
