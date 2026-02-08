@@ -35,7 +35,7 @@ public class AttachmentManagementModel : PageModel
 
     public string ViewAttachmentUrl(string fileName)
     {
-        return Url.Page("/ViewAttachment", new { familyName = FamilyName, personName = PersonName, fileName });
+        return Url.Page("/ViewAttachment", new { familyName = FamilyName, personName = PersonName, fileName }) ?? "";
     }
 
     public IActionResult OnGet(string familyName, string fileName, string personName)

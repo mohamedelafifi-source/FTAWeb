@@ -6,9 +6,14 @@
 
 <div class="container mt-4">
     <div class="card shadow">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h4 class="mb-0">Family: @Model.FamilyName</h4>
-            <a asp-page="/Index" class="btn btn-secondary btn-sm">Exit</a>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="text-muted small d-none d-md-inline">Add tree:</span>
+                <a href="#uploadForm" class="btn btn-primary btn-sm">Upload</a>
+                <a href="#importForm" class="btn btn-outline-primary btn-sm">Import</a>
+                <a asp-page="/Index" class="btn btn-secondary btn-sm">Exit</a>
+            </div>
         </div>
         <div class="card-body">
             @if (TempData["Message"] != null)
@@ -19,14 +24,36 @@
             {
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
             }
-            <h5 class="mb-3">Upload a new Tree file</h5>
-            <form method="post" enctype="multipart/form-data" asp-page-handler="Upload" asp-route-familyName="@Model.FamilyName" class="mb-4">
-                <div class="input-group">
+            <div class="mb-4" id="uploadForm">
+                <h5 class="mb-3">Upload a new Tree file</h5>
+                <form method="post" enctype="multipart/form-data" asp-page-handler="Upload" asp-route-familyName="@Model.FamilyName">
+                    <div class="input-group">
                     <input type="file" class="form-control" name="jsonFile" accept=".json,application/json" required />
                     <button type="submit" class="btn btn-primary">Upload</button>
                 </div>
                 <div class="form-text">Tree files from the Family Tree application. On iPhone/iPad, tap “Choose File” then pick a file from Files, iCloud Drive, or On My Device.</div>
             </form>
+            </div>
+
+            <div class="mb-4" id="importForm">
+                <h5 class="mb-3">Import from text file</h5>
+                <p class="text-muted small">Format: one line per person: <code>NAME: nnn; PARENTS: nnn; SPOUSES: nnn; SIBLINGS: nnn; CHILDREN: nnn</code>. Multiple values separated by commas. Empty PARENTS = top level.</p>
+                <form method="post" enctype="multipart/form-data" asp-page-handler="Import" asp-route-familyName="@Model.FamilyName">
+                    <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label small">Text file</label>
+                        <input type="file" class="form-control form-control-sm" name="textFile" accept=".txt,text/plain" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Tree file name</label>
+                        <input type="text" class="form-control form-control-sm" name="treeFileName" placeholder="e.g. MyTree" required />
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary btn-sm">Import</button>
+                    </div>
+                    </div>
+                </form>
+            </div>
 
             <p class="text-muted small mb-3">💡 To add photos or documents: open a tree with <strong>View</strong>, click a person to focus, then click any person again to open their attachments.</p>
             <h5 class="mb-3">Tree files</h5>
