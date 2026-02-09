@@ -16,4 +16,7 @@ public interface IFamilyPasswordService
 
     /// <summary>Ensures the password file exists; seeds with default families if empty.</summary>
     void EnsurePasswordFileExists();
+
+    /// <summary>Syncs the password file with actual family directories: remove entries for missing dirs, add entry for each directory without one (password = folder name).</summary>
+    void SyncWithDirectories();
 }

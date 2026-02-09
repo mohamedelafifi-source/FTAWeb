@@ -76,9 +76,14 @@ public class FamilyStorageService : IFamilyStorageService
         return string.IsNullOrEmpty(invalid) ? "_" : invalid;
     }
 
+    /// <summary>Returns path to family folder. Resolves to actual directory name on disk so casing matches (fixes rename on Linux/case-sensitive).</summary>
     private string GetFamilyPath(string familyName)
     {
-        return Path.Combine(GetFamiliesBasePath(), SanitizeFolderName(familyName));
+        var basePath = GetFamiliesBasePath();
+        if (!Directory.Exists(basePath)) return Path.Combine(basePath, SanitizeFolderName(familyName));
+        var dirs = Directory.GetDirectories(basePath);
+        var match = dirs.FirstOrDefault(d => string.Equals(Path.GetFileName(d), familyName, StringComparison.OrdinalIgnoreCase));
+        return !string.IsNullOrEmpty(match) ? match : Path.Combine(basePath, SanitizeFolderName(familyName));
     }
 
     private static string SanitizeFileName(string name)
@@ -144,14 +149,37 @@ public class FamilyStorageService : IFamilyStorageService
 
     public bool RenameFile(string familyName, string oldFileName, string newFileName)
     {
+        if (string.IsNullOrWhiteSpace(oldFileName)) return false;
         var path = GetFamilyPath(familyName);
-        var oldPath = Path.Combine(path, oldFileName);
-        if (!File.Exists(oldPath)) return false;
+        if (!Directory.Exists(path)) return false;
+        var jsonFiles = Directory.GetFiles(path, "*.json");
+        var actualOld = jsonFiles.Select(Path.GetFileName).FirstOrDefault(f => string.Equals(f, oldFileName, StringComparison.OrdinalIgnoreCase));
+        if (string.IsNullOrEmpty(actualOld)) return false;
+        var oldPath = Path.Combine(path, actualOld);
         var safeNew = SanitizeFileName(newFileName);
         var newPath = Path.Combine(path, safeNew);
-        if (File.Exists(newPath) && !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) return false;
-        File.Move(oldPath, newPath);
-        return true;
+        if (string.Equals(actualOld, safeNew, StringComparison.OrdinalIgnoreCase))
+            return true; // No-op: same name
+        if (File.Exists(newPath)) return false;
+        try
+        {
+            var tempPath = Path.Combine(path, "__tmp_" + Guid.NewGuid().ToString("N") + ".json");
+            File.Move(oldPath, tempPath);
+            try
+            {
+                File.Move(tempPath, newPath);
+                return true;
+            }
+            catch (IOException)
+            {
+                try { File.Move(tempPath, oldPath); } catch { /* restore best effort */ }
+                return false;
+            }
+        }
+        catch (IOException)
+        {
+            return false;
+        }
     }
 
     public bool DeleteFile(string familyName, string fileName)
