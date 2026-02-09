@@ -30,14 +30,12 @@
                     <div class="input-group">
                     <input type="file" class="form-control" name="jsonFile" accept=".json,application/json" required />
                     <button type="submit" class="btn btn-primary">Upload</button>
-                </div>
-                <div class="form-text">Tree files from the Family Tree application. On iPhone/iPad, tap “Choose File” then pick a file from Files, iCloud Drive, or On My Device.</div>
-            </form>
+                    </div>
+                </form>
             </div>
 
             <div class="mb-4" id="importForm">
                 <h5 class="mb-3">Import from text file</h5>
-                <p class="text-muted small">Format: one line per person: <code>NAME: nnn; PARENTS: nnn; SPOUSES: nnn; SIBLINGS: nnn; CHILDREN: nnn</code>. Multiple values separated by commas. Empty PARENTS = top level.</p>
                 <form method="post" enctype="multipart/form-data" asp-page-handler="Import" asp-route-familyName="@Model.FamilyName">
                     <div class="row g-2 align-items-end">
                     <div class="col-md-5">
@@ -55,7 +53,6 @@
                 </form>
             </div>
 
-            <p class="text-muted small mb-3">💡 To add photos or documents: open a tree with <strong>View</strong>, click a person to focus, then click any person again to open their attachments.</p>
             <h5 class="mb-3">Tree files</h5>
             @if (Model.Files.Count == 0)
             {

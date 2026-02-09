@@ -18,6 +18,11 @@
                             <input asp-for="FamilyName" class="form-control" placeholder="Enter family name" autofocus />
                             <span asp-validation-for="FamilyName" class="text-danger"></span>
                         </div>
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <input asp-for="Password" class="form-control" type="password" placeholder="Password to access this family" autocomplete="new-password" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">Create Family</button>
                             <a asp-page="/Index" class="btn btn-secondary">Cancel</a>

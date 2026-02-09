@@ -2,7 +2,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddSession(options => { options.IdleTimeout = TimeSpan.FromHours(2); });
 builder.Services.AddScoped<FTAWeb.Services.IFamilyStorageService, FTAWeb.Services.FamilyStorageService>();
+builder.Services.AddScoped<FTAWeb.Services.IFamilyPasswordService, FTAWeb.Services.FamilyPasswordService>();
 
 var app = builder.Build();
 
@@ -18,6 +20,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthorization();
 
 app.MapStaticAssets();
