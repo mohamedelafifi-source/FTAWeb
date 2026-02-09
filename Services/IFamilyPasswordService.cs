@@ -11,6 +11,9 @@ public interface IFamilyPasswordService
     /// <summary>Adds or updates the password for a family (by folder name).</summary>
     void SetPassword(string familyFolderName, string password);
 
+    /// <summary>Removes the password entry for a family (e.g. when family is deleted).</summary>
+    void RemovePassword(string familyFolderName);
+
     /// <summary>Ensures the password file exists; seeds with default families if empty.</summary>
     void EnsurePasswordFileExists();
 }

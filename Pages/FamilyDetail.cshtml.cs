@@ -7,10 +7,12 @@ namespace FTAWeb.Pages;
 public class FamilyDetailModel : PageModel
 {
     private readonly IFamilyStorageService _storage;
+    private readonly IFamilyPasswordService _passwords;
 
-    public FamilyDetailModel(IFamilyStorageService storage)
+    public FamilyDetailModel(IFamilyStorageService storage, IFamilyPasswordService passwords)
     {
         _storage = storage;
+        _passwords = passwords;
     }
 
     [FromRoute]
@@ -101,5 +103,18 @@ public class FamilyDetailModel : PageModel
         else
             TempData["Error"] = "Could not delete file.";
         return RedirectToPage("/FamilyDetail", new { familyName = FamilyName });
+    }
+
+    public IActionResult OnPostDeleteFamily(string familyName)
+    {
+        FamilyName = familyName ?? "";
+        if (string.IsNullOrEmpty(FamilyName))
+            return RedirectToPage("/SelectFamily");
+        if (!_storage.FamilyExists(FamilyName))
+            return RedirectToPage("/SelectFamily");
+        _storage.DeleteFamily(FamilyName);
+        _passwords.RemovePassword(FamilyName);
+        TempData["Message"] = "Family \"" + FamilyName + "\" has been deleted.";
+        return RedirectToPage("/SelectFamily");
     }
 }

@@ -78,6 +78,15 @@ public class FamilyPasswordService : IFamilyPasswordService
         WriteAll(all);
     }
 
+    public void RemovePassword(string familyFolderName)
+    {
+        if (string.IsNullOrWhiteSpace(familyFolderName)) return;
+        var name = familyFolderName.Trim();
+        var all = ReadAll();
+        all.RemoveAll(e => string.Equals(e.FamilyName, name, StringComparison.OrdinalIgnoreCase));
+        WriteAll(all);
+    }
+
     public void EnsurePasswordFileExists()
     {
         var path = GetPasswordFilePath();
