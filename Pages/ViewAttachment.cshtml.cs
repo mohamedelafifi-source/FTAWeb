@@ -20,20 +20,10 @@ public class ViewAttachmentModel : PageModel
         if (!_storage.FamilyExists(familyName))
             return NotFound();
 
-        var path = _storage.GetAttachmentPath(familyName, personName, fileName);
-        if (path == null)
+        var (stream, contentType) = _storage.GetAttachment(familyName, personName, fileName);
+        if (stream == null)
             return NotFound();
 
-        var ext = Path.GetExtension(fileName);
-        var contentType = ext.ToLowerInvariant() switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            ".pdf" => "application/pdf",
-            _ => "application/octet-stream"
-        };
-        return PhysicalFile(path, contentType, fileName);
+        return File(stream, contentType ?? "application/octet-stream", fileName);
     }
 }

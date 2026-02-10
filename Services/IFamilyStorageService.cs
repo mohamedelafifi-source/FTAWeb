@@ -22,4 +22,9 @@ public interface IFamilyStorageService
     bool DeleteAttachment(string familyName, string personName, string fileName);
     (Stream? stream, string? contentType) GetAttachment(string familyName, string personName, string fileName);
     string? GetAttachmentPath(string familyName, string personName, string fileName);
+
+    /// <summary>Reads the shared password file content (used by password service; null if not present).</summary>
+    Task<string?> GetPasswordFileContentAsync(CancellationToken ct = default);
+    /// <summary>Writes the shared password file content.</summary>
+    Task SetPasswordFileContentAsync(string content, CancellationToken ct = default);
 }

@@ -35,19 +35,12 @@ public class FamilyPasswordService : IFamilyPasswordService
         return folderName;
     }
 
-    private string GetPasswordFilePath()
-    {
-        var familiesPath = _storage.GetFamiliesBasePath();
-        var parent = Path.GetDirectoryName(familiesPath) ?? familiesPath;
-        return Path.Combine(parent, PasswordFileName);
-    }
-
     private List<(string FamilyName, string Password)> ReadAll()
     {
-        var path = GetPasswordFilePath();
+        var content = _storage.GetPasswordFileContentAsync().GetAwaiter().GetResult();
         var list = new List<(string, string)>();
-        if (!File.Exists(path)) return list;
-        foreach (var line in File.ReadAllLines(path))
+        if (string.IsNullOrEmpty(content)) return list;
+        foreach (var line in content.Split('\n', '\r'))
         {
             var t = line.Trim();
             if (string.IsNullOrEmpty(t)) continue;
@@ -63,12 +56,9 @@ public class FamilyPasswordService : IFamilyPasswordService
 
     private void WriteAll(List<(string FamilyName, string Password)> entries)
     {
-        var path = GetPasswordFilePath();
-        var dir = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            Directory.CreateDirectory(dir);
         var lines = entries.Select(e => $"{e.FamilyName}{Separator}{e.Password}");
-        File.WriteAllLines(path, lines);
+        var content = string.Join(Environment.NewLine, lines);
+        _storage.SetPasswordFileContentAsync(content).GetAwaiter().GetResult();
     }
 
     public IReadOnlyList<string> GetFamiliesByPassword(string password)
@@ -104,14 +94,9 @@ public class FamilyPasswordService : IFamilyPasswordService
 
     public void EnsurePasswordFileExists()
     {
-        var path = GetPasswordFilePath();
-        if (!File.Exists(path))
-        {
-            var dir = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-            File.WriteAllLines(path, SeedLines);
-        }
+        var content = _storage.GetPasswordFileContentAsync().GetAwaiter().GetResult();
+        if (string.IsNullOrWhiteSpace(content))
+            _storage.SetPasswordFileContentAsync(string.Join(Environment.NewLine, SeedLines)).GetAwaiter().GetResult();
         SyncWithDirectories();
     }
 

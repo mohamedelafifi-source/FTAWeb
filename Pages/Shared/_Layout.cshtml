@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+@inject FTAWeb.Services.IStorageModeService StorageMode
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -40,6 +42,11 @@
     <footer class="border-top footer text-muted">
         <div class="container">
             &copy; 2026 - FTAWeb - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            <span class="ms-2">| Storage: <strong>@StorageMode.StorageModeName</strong></span>
+            @if (!StorageMode.IsAzureBlob && Env.IsDevelopment())
+            {
+                <span class="ms-1 small text-muted">(copy appsettings.Secrets.example.json to appsettings.Secrets.json and add your connection string)</span>
+            }
         </div>
     </footer>
 

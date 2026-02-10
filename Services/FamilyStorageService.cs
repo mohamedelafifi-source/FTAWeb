@@ -270,4 +270,29 @@ public class FamilyStorageService : IFamilyStorageService
         if (string.IsNullOrEmpty(ext) || !AllowedAttachmentExtensions.Contains(ext)) return null;
         return filePath;
     }
+
+    private const string PasswordFileName = "family_passwords.txt";
+
+    public async Task<string?> GetPasswordFileContentAsync(CancellationToken ct = default)
+    {
+        var path = GetPasswordFilePath();
+        if (!File.Exists(path)) return null;
+        return await File.ReadAllTextAsync(path, ct);
+    }
+
+    public async Task SetPasswordFileContentAsync(string content, CancellationToken ct = default)
+    {
+        var path = GetPasswordFilePath();
+        var dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+        await File.WriteAllTextAsync(path, content ?? "", ct);
+    }
+
+    private string GetPasswordFilePath()
+    {
+        var familiesPath = GetFamiliesBasePath();
+        var parent = Path.GetDirectoryName(familiesPath) ?? familiesPath;
+        return Path.Combine(parent, PasswordFileName);
+    }
 }

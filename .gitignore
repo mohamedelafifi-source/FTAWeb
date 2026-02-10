@@ -74,6 +74,13 @@ ScaffoldingReadMe.txt
 # Family tree uploaded data (stored on server)
 App_Data/
 
+# Local appsettings and secrets (may contain Azure connection string, etc.)
+appsettings.Development.json
+appsettings.Secrets.json
+appsettings.*.local.json
+*.local.json
+!*.example.json
+
 # StyleCop
 StyleCopReport.xml
 
