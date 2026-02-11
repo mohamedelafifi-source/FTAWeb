@@ -16,12 +16,20 @@ To use **the same data** when running locally and when deployed, store family da
   - `FamilyStorage:Azure:ConnectionString` = your connection string
   - `FamilyStorage:Azure:ContainerName` = `fta-families` (or your container name)
 
-**Deployed (Azure App Service):**
+**Deployed (Azure App Service) — required for "Storage: Azure Blob" after deploy:**
 
-- In the App Service → **Configuration** → Application settings, add:
-  - Name: `FamilyStorage__Azure__ConnectionString`
-  - Value: your storage account connection string
-- Optionally: `FamilyStorage__Azure__ContainerName` = `fta-families`
+- In [Azure Portal](https://portal.azure.com) → your App Service (e.g. **FTAppV1**) → **Configuration** → **Application settings** → **+ New application setting**, add one of:
+
+  **Option A – Connection string (easiest)**  
+  - Name: `FamilyStorage__Azure__ConnectionString`  
+  - Value: your full connection string (from Storage account → Access keys → Connection string)
+
+  **Option B – Account name + key**  
+  - Name: `FamilyStorage__Azure__AccountName` → Value: e.g. `ftawebstorage`  
+  - Name: `FamilyStorage__Azure__AccountKey` → Value: the key (key1 or key2)  
+  - Name: `FamilyStorage__Azure__ContainerName` → Value: e.g. `fta-families` (optional; default in code is `fta-families`)
+
+- Click **Save** and then **Confirm** (and restart the app if it doesn’t restart automatically).
 
 Use the **same** storage account and container for both local and deployed app so they share the same families, tree files, attachments, and passwords.
 

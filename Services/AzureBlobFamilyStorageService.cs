@@ -28,12 +28,14 @@ public class AzureBlobFamilyStorageService : IFamilyStorageService
     public AzureBlobFamilyStorageService(IConfiguration configuration)
     {
         var section = configuration.GetSection("FamilyStorage").GetSection("Azure");
-        var connectionString = GetConnectionString(configuration, section);
-        if (string.IsNullOrEmpty(connectionString))
-            throw new InvalidOperationException("Set FamilyStorage:Azure:ConnectionString, or both AccountName and AccountKey, in appsettings.Secrets.json or appsettings.Development.json.");
         var containerName = configuration["FamilyStorage:Azure:ContainerName"]?.Trim()
             ?? section["ContainerName"]?.Trim() ?? "fta-families";
         if (string.IsNullOrEmpty(containerName)) containerName = "fta-families";
+
+        var connectionString = GetConnectionString(configuration, section);
+        if (string.IsNullOrEmpty(connectionString))
+            throw new InvalidOperationException("Set FamilyStorage:Azure:ConnectionString, or both AccountName and AccountKey, in App Service (Environment variables → App settings) or appsettings.Development.json.");
+
         try
         {
             _container = new BlobContainerClient(connectionString, containerName);
@@ -41,9 +43,27 @@ public class AzureBlobFamilyStorageService : IFamilyStorageService
         }
         catch (FormatException ex) when (ex.Message.Contains("account information", StringComparison.OrdinalIgnoreCase))
         {
+            // Connection string from config/env is invalid (e.g. pasted wrong in App Service). Try building from AccountName + AccountKey only.
+            var fallback = GetConnectionStringFromAccountKeyOnly(section);
+            if (!string.IsNullOrEmpty(fallback))
+            {
+                _container = new BlobContainerClient(fallback, containerName);
+                _container.CreateIfNotExists();
+                return;
+            }
             throw new InvalidOperationException(
-                "Invalid Azure Storage settings. Use either (A) ConnectionString: paste the full string from Azure Portal → Access keys → key1 → Connection string, or (B) AccountName + AccountKey as two separate values. Ensure there are no extra line breaks or quotes.", ex);
+                "Invalid Azure Storage connection string. In App Service add two settings: FamilyStorage__Azure__AccountName = your storage account name (e.g. ftawebstorage), FamilyStorage__Azure__AccountKey = the Key from Access keys → key1 (the long string). Remove or fix FamilyStorage__Azure__ConnectionString if you use it.", ex);
         }
+    }
+
+    /// <summary>Build connection string from only AccountName + AccountKey (env or config). Used when ConnectionString value fails to parse.</summary>
+    private static string? GetConnectionStringFromAccountKeyOnly(IConfigurationSection section)
+    {
+        var accountName = section["AccountName"]?.Trim() ?? Environment.GetEnvironmentVariable("FamilyStorage__Azure__AccountName")?.Trim();
+        var accountKey = section["AccountKey"]?.Trim() ?? Environment.GetEnvironmentVariable("FamilyStorage__Azure__AccountKey")?.Trim();
+        if (string.IsNullOrEmpty(accountName) || string.IsNullOrEmpty(accountKey))
+            return null;
+        return $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey};EndpointSuffix=core.windows.net";
     }
 
     /// <summary>Get connection string from ConnectionString, or build from AccountName + AccountKey (avoids copy-paste issues).</summary>
@@ -54,13 +74,33 @@ public class AzureBlobFamilyStorageService : IFamilyStorageService
             ?? Environment.GetEnvironmentVariable("FamilyStorage__Azure__ConnectionString")?.Trim();
         if (!string.IsNullOrEmpty(raw))
         {
-            return string.Join("", raw.Split('\n', '\r').Select(s => s.Trim())).Trim();
+            raw = NormalizeConnectionString(raw);
+            if (!string.IsNullOrEmpty(raw))
+            {
+                // If it looks like a full connection string, use it; otherwise treat as AccountKey and build from AccountName + this key
+                if (raw.Contains("AccountKey=", StringComparison.OrdinalIgnoreCase) || raw.Contains("DefaultEndpointsProtocol=", StringComparison.OrdinalIgnoreCase))
+                    return raw;
+                var accountName = section["AccountName"]?.Trim() ?? Environment.GetEnvironmentVariable("FamilyStorage__Azure__AccountName")?.Trim();
+                if (!string.IsNullOrEmpty(accountName))
+                    return $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={raw};EndpointSuffix=core.windows.net";
+                // Raw doesn't look like a connection string and we have no AccountName; fall through to AccountName + AccountKey from section/env
+            }
         }
-        var accountName = section["AccountName"]?.Trim() ?? Environment.GetEnvironmentVariable("FamilyStorage__Azure__AccountName")?.Trim();
+        var accountName2 = section["AccountName"]?.Trim() ?? Environment.GetEnvironmentVariable("FamilyStorage__Azure__AccountName")?.Trim();
         var accountKey = section["AccountKey"]?.Trim() ?? Environment.GetEnvironmentVariable("FamilyStorage__Azure__AccountKey")?.Trim();
-        if (string.IsNullOrEmpty(accountName) || string.IsNullOrEmpty(accountKey))
+        if (string.IsNullOrEmpty(accountName2) || string.IsNullOrEmpty(accountKey))
             return null;
-        return $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey};EndpointSuffix=core.windows.net";
+        return $"DefaultEndpointsProtocol=https;AccountName={accountName2};AccountKey={accountKey};EndpointSuffix=core.windows.net";
+    }
+
+    /// <summary>Remove newlines, extra spaces, and surrounding quotes so pasted connection strings parse correctly.</summary>
+    private static string NormalizeConnectionString(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "";
+        var s = string.Join("", value.Split('\n', '\r').Select(part => part.Trim())).Trim();
+        while (s.Length >= 2 && (s[0] == '"' && s[^1] == '"') || (s[0] == '\'' && s[^1] == '\''))
+            s = s[1..^1].Trim();
+        return s;
     }
 
     public string GetFamiliesBasePath() => "azure-blob"; // Sentinel; password file is stored in blob

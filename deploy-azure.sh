@@ -4,9 +4,13 @@
 
 set -e
 
-# 1. Publish the app (output to ./publish)
+# 1. Clean and publish (output to ./publish)
+#    Removing existing publish/ avoids MSB3030 and path-doubling (publish/publish/...).
+echo "Cleaning..."
+dotnet clean -c Release -nologo -v q
+rm -rf publish
 echo "Publishing..."
-dotnet publish -c Release -o publish
+dotnet publish -c Release -o publish -nologo
 
 # 2. Create zip from publish folder (fix: use ../app.zip so zip is in project root)
 echo "Creating app.zip..."
